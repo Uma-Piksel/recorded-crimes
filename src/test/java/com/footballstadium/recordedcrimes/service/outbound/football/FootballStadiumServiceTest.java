@@ -1,5 +1,8 @@
 package com.footballstadium.recordedcrimes.service.outbound.football;
 
+import com.footballstadium.recordedcrimes.data.FootballStadium;
+import com.footballstadium.recordedcrimes.data.FootballStadiumRecordedCrimeFeed;
+import com.footballstadium.recordedcrimes.service.mapper.FootballStadiumTeamDataMapper;
 import com.footballstadium.recordedcrimes.service.outbound.exceptions.ExternalSystemException;
 import com.footballstadium.recordedcrimes.service.responsedata.football.Competition;
 import com.footballstadium.recordedcrimes.service.responsedata.football.Team;
@@ -24,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -43,11 +47,10 @@ public class FootballStadiumServiceTest {
     private FootballStadiumService footballStadiumService;
 
     @Mock
-    private RestTemplate restTemplate;
-
+    private FootballStadiumTeamDataMapper teamDataMapper;
 
     @Mock
-    private ResponseEntity<TeamFeed> teamFeedResponseEntity;
+    private RestTemplate restTemplate;
 
     @Before
     public void setUpBefore() {
@@ -57,35 +60,54 @@ public class FootballStadiumServiceTest {
 
     @Test
     public void testGetTeamFeedForPLCompetitionReturnsTeamsFeedDataSuccessfully() {
-        Team team = Team.builder().id(TEAM_ID).name(TEAM_NAME).address(ADDRESS).build();
-        TeamFeed feed = TeamFeed.builder().competition(Competition.builder().code(COMPETITION_CODE).name(COMPETITION_NAME).id(COMPETITION_ID).build()).teams(Arrays.asList(team)).build();
-        ResponseEntity responseEntity = new ResponseEntity(feed, HttpStatus.OK);
-        when(restTemplate.exchange(anyString(), any(HttpMethod.class), any(), ArgumentMatchers.<Class<String>>any())).thenReturn(responseEntity);
+        TeamFeed teamFeed = mockRestTemplateCall();
+        FootballStadiumRecordedCrimeFeed expectedFeed = mockMapper(teamFeed);
 
-        TeamFeed result = footballStadiumService.getTeamFeedForFootballCompetition();
-        assertTeamFeedData(result);
+        FootballStadiumRecordedCrimeFeed actualFeed = footballStadiumService.getTeamFeedForFootballCompetition();
+
+        assertEquals(actualFeed, expectedFeed);
+        assertFeedData(actualFeed);
+        verify(restTemplate).exchange(anyString(), any(HttpMethod.class), any(), ArgumentMatchers.<Class<String>>any());
     }
 
     @Test(expected = ExternalSystemException.class)
     public void testGetTeamFeedForPLCompetitionThrowsExceptionWhenExternalServiceReturnsErrorResponse() {
-        Team team = Team.builder().id(TEAM_ID).name(TEAM_NAME).address(ADDRESS).build();
         HttpServerErrorException httpServerErrorException = new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR);
         when(restTemplate.exchange(anyString(), any(HttpMethod.class), any(), ArgumentMatchers.<Class<String>>any())).thenThrow(httpServerErrorException);
 
         footballStadiumService.getTeamFeedForFootballCompetition();
     }
 
-    private void assertTeamFeedData(TeamFeed result) {
-        assertNotNull(result);
-        assertNotNull(result.getCompetition());
-        assertEquals(result.getCompetition().getId(), COMPETITION_ID);
-        assertEquals(result.getCompetition().getCode(), COMPETITION_CODE);
-        assertEquals(result.getCompetition().getName(), COMPETITION_NAME);
-        assertEquals(result.getTeams().size(), 1);
-        Team teamResult = result.getTeams().get(0);
-        assertEquals(teamResult.getAddress(), ADDRESS);
-        assertEquals(teamResult.getId(), TEAM_ID);
-        assertEquals(teamResult.getName(), TEAM_NAME);
+    private FootballStadiumRecordedCrimeFeed buildFootballStadiumRecordedCrimesFeed() {
+        return FootballStadiumRecordedCrimeFeed.builder()
+                .competitionId(COMPETITION_ID).competitionCode(COMPETITION_CODE).competitionName(COMPETITION_NAME)
+                .footballStadiums(Arrays.asList(FootballStadium.builder().teamId(TEAM_ID).teamName(TEAM_NAME).footballStadiumAddress(ADDRESS).build())).build();
+    }
+
+    private TeamFeed mockRestTemplateCall() {
+        Team team = Team.builder().id(TEAM_ID).name(TEAM_NAME).address(ADDRESS).build();
+        TeamFeed teamFeed = TeamFeed.builder().competition(Competition.builder().code(COMPETITION_CODE).name(COMPETITION_NAME).id(COMPETITION_ID).build()).teams(Arrays.asList(team)).build();
+        ResponseEntity responseEntity = new ResponseEntity(teamFeed, HttpStatus.OK);
+        when(restTemplate.exchange(anyString(), any(HttpMethod.class), any(), ArgumentMatchers.<Class<String>>any())).thenReturn(responseEntity);
+        return teamFeed;
+    }
+
+    private FootballStadiumRecordedCrimeFeed mockMapper(TeamFeed teamFeed) {
+        FootballStadiumRecordedCrimeFeed expectedFeed = buildFootballStadiumRecordedCrimesFeed();
+        when(teamDataMapper.mapFrom(teamFeed)).thenReturn(expectedFeed);
+        return expectedFeed;
+    }
+
+    private void assertFeedData(FootballStadiumRecordedCrimeFeed actualFeed) {
+        assertNotNull(actualFeed);
+        assertEquals(actualFeed.getCompetitionId(), COMPETITION_ID);
+        assertEquals(actualFeed.getCompetitionCode(), COMPETITION_CODE);
+        assertEquals(actualFeed.getCompetitionName(), COMPETITION_NAME);
+        assertEquals(actualFeed.getFootballStadiums().size(), 1);
+        FootballStadium footballStadium = actualFeed.getFootballStadiums().get(0);
+        assertEquals(footballStadium.getFootballStadiumAddress(), ADDRESS);
+        assertEquals(footballStadium.getTeamId(), TEAM_ID);
+        assertEquals(footballStadium.getTeamName(), TEAM_NAME);
     }
 
 }

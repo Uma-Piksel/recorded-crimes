@@ -1,5 +1,7 @@
 package com.footballstadium.recordedcrimes.service.outbound.football;
 
+import com.footballstadium.recordedcrimes.data.FootballStadiumRecordedCrimeFeed;
+import com.footballstadium.recordedcrimes.service.mapper.FootballStadiumTeamDataMapper;
 import com.footballstadium.recordedcrimes.service.outbound.exceptions.ExternalSystemException;
 import com.footballstadium.recordedcrimes.service.responsedata.football.TeamFeed;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,8 @@ public class FootballStadiumService {
     private static final String MSG_INVALID_RESPONSE = "Invalid response";
     private static final String PREMIER_LEAGUE_FOOTBALL_COMPETITION_CODE = "PL";
 
+    @Autowired
+    private FootballStadiumTeamDataMapper teamDataMapper;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -35,7 +39,12 @@ public class FootballStadiumService {
     @Value("${api.key}")
     private String apiKey;
 
-    public TeamFeed getTeamFeedForFootballCompetition() {
+    public FootballStadiumRecordedCrimeFeed getTeamFeedForFootballCompetition() {
+        TeamFeed teamFeed = getTeamFeedFromExternalService();
+        return teamDataMapper.mapFrom(teamFeed);
+    }
+
+    private TeamFeed getTeamFeedFromExternalService() {
         String baseUrl = url + PREMIER_LEAGUE_FOOTBALL_COMPETITION_CODE + "/teams/";
         return get(baseUrl, TeamFeed.class);
     }

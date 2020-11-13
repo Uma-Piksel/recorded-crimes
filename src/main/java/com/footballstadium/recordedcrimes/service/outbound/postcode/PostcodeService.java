@@ -58,7 +58,7 @@ public class PostcodeService {
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
         try {
             ResponseEntity<PostCodeFeed> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, PostCodeFeed.class);
-            return response.getBody();
+            return response != null ? response.getBody() : new PostCodeFeed();
         } catch (Exception e) {
             log.info("There is some error posting to external postcode service API ", e);
             throw new ExternalSystemException(SYSTEM, MSG_INVALID_RESPONSE, e);
