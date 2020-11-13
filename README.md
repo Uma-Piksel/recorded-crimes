@@ -10,6 +10,9 @@ Run the FootballStadiumRecordedCrimeApplication.
 Then make a query to the recorded service API using postman or curl request. 
 
 Example to query in postman: 
+
+GET /localhost:8080/premier-league/football-stadium/recoredcrimes
+
 GET /localhost:8080/premier-league/football-stadium/recoredcrimes?date=2018-08
 
 
