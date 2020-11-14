@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,7 +36,9 @@ public class CrimesService {
 
     public List<RecordedCrime> getRecordedCrimeData(String date, Double latitude, Double longitude) {
         Crime[] crimes = getCrimeDataFromService(date, latitude, longitude);
-        return crimeDataMapper.mapFrom(crimes);
+        List<RecordedCrime> list = crimeDataMapper.mapFrom(crimes);
+        Collections.sort(list, Collections.reverseOrder());
+        return list;
     }
 
     private Crime[] getCrimeDataFromService(String date, Double latitude, Double longitude) {

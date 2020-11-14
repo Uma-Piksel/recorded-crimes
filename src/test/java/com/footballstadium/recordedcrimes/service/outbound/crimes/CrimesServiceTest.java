@@ -32,11 +32,14 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CrimesServiceTest {
 
-    private static final String DATE = "2019-08";
+    private static final String DATE = "2019-09";
+    private static final String DATE1 = "2020-08";
     private static final Double LATITUDE = 51.556667;
     private static final Double LONGITUDE = 0.106371;
     private static final String CATEGORY = "anti-social-behaviour";
+    private static final String CATEGORY1 = "vehicle-crime";
     private static final Integer ID = 86788033;
+    private static final Integer ID1 = 99988033;
 
     @InjectMocks
     private CrimesService crimesService;
@@ -73,19 +76,18 @@ public class CrimesServiceTest {
         crimesService.getRecordedCrimeData(DATE, LATITUDE, LONGITUDE);
     }
 
-    private RecordedCrime buildRecordedCrime() {
-        return RecordedCrime.builder().crimeCategory(CATEGORY).crimeId(ID).crimeMonth(DATE).build();
-    }
-
     private List<RecordedCrime> mockMapper(Crime[] crimes) {
-        List<RecordedCrime> expectedRecordedCrimes = Arrays.asList(buildRecordedCrime());
+        RecordedCrime recordedCrime = RecordedCrime.builder().crimeCategory(CATEGORY).crimeId(ID).crimeMonth(DATE).build();
+        RecordedCrime recordedCrime1 = RecordedCrime.builder().crimeCategory(CATEGORY1).crimeId(ID1).crimeMonth(DATE1).build();
+        List<RecordedCrime> expectedRecordedCrimes = Arrays.asList(recordedCrime, recordedCrime1);
         when(crimeDataMapper.mapFrom(crimes)).thenReturn(expectedRecordedCrimes);
         return expectedRecordedCrimes;
     }
 
     private Crime[] mockRestTemplateCall() {
-        Crime crime = Crime.builder().category(CATEGORY).id(86788033).month(DATE).build();
-        Crime[] expectedCrimes = {crime};
+        Crime crime = Crime.builder().category(CATEGORY).id(ID).month(DATE).build();
+        Crime crime1 = Crime.builder().category(CATEGORY1).id(ID1).month(DATE1).build();
+        Crime[] expectedCrimes = {crime, crime1};
         when(restTemplate.getForObject(anyString(), ArgumentMatchers.<Class<Crime[]>>any())).thenReturn(expectedCrimes);
         return expectedCrimes;
     }
@@ -93,9 +95,13 @@ public class CrimesServiceTest {
     private void assertRecordedCrimeData(List<RecordedCrime> actualResult) {
         assertNotNull(actualResult);
         RecordedCrime recordedCrime = actualResult.get(0);
-        assertEquals(recordedCrime.getCrimeCategory(), CATEGORY);
-        assertEquals(recordedCrime.getCrimeId(), ID);
-        assertEquals(recordedCrime.getCrimeMonth(), DATE);
+        assertEquals(recordedCrime.getCrimeCategory(), CATEGORY1);
+        assertEquals(recordedCrime.getCrimeId(), ID1);
+        assertEquals(recordedCrime.getCrimeMonth(), DATE1);
+        RecordedCrime recordedCrime1 = actualResult.get(1);
+        assertEquals(recordedCrime1.getCrimeCategory(), CATEGORY);
+        assertEquals(recordedCrime1.getCrimeId(), ID);
+        assertEquals(recordedCrime1.getCrimeMonth(), DATE);
     }
 
 }

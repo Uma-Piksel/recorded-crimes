@@ -41,7 +41,7 @@ public class FootballStadiumRecordedCrimesService {
     }
 
     private void enrichWithPostcodeData(FootballStadiumRecordedCrimeFeed stadiumFeed) {
-        //TODO - cache the postcode data as the data seems never changing
+        //TODO -Improvement - cache the postcode data as the data seems never changing
         PostCodeFeed postcodeFeed = postcodeService.getPostCodeData(getPostCodePayload(stadiumFeed.getFootballStadiums()));
         stadiumFeed.getFootballStadiums().forEach(stadium -> {
             Optional<Result> postcodeFeedResult = postcodeFeed.getResult().stream().filter(result -> result.getQuery().equals(stadium.getFootballStadiumPostCode())).findFirst();
@@ -59,7 +59,7 @@ public class FootballStadiumRecordedCrimesService {
     private List<RecordedCrime> getCrimes(String date, FootballStadium footballStadium) {
         List<RecordedCrime> recordedCrimes = null;
         if (footballStadium.getLatitude() != null && footballStadium.getLongitude() != null) {
-            //TODO - make a call to crime service api for collection of latitude and longitude values instead of making a call for each latitude and longitude
+            //TODO - Improvement -Find an API - make a call to crime service api for collection of latitude and longitude values instead of making a call for each latitude and longitude
             recordedCrimes = crimesService.getRecordedCrimeData(date, footballStadium.getLatitude(), footballStadium.getLongitude());
         }
         return recordedCrimes;
